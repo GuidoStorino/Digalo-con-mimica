@@ -109,12 +109,16 @@ const GAME_DATA = {
 
 // Películas para el inicio
 const STARTER_MOVIES = [
-  { title: 'Titanic', poster: '🚢', hint: 'Un gran barco...' },
-  { title: 'El Rey León', poster: '🦁', hint: 'Rey de la sabana' },
-  { title: 'Star Wars', poster: '⭐', hint: 'Guerras galácticas' },
-  { title: 'Jurassic Park', poster: '🦕', hint: 'Dinosaurios' },
-  { title: 'Matrix', poster: '💊', hint: 'Realidad virtual' },
-  { title: 'Avatar', poster: '🌳', hint: 'Planeta Pandora' }
+  { title: 'Titanic', poster: '🚢💔' },
+  { title: 'El Rey León', poster: '👑🦁' },
+  { title: 'Star Wars', poster: '⭐⚔️' },
+  { title: 'Jurassic Park', poster: '🦕🌴' },
+  { title: 'Matrix', poster: '💊🕶️' },
+  { title: 'Avatar', poster: '🌳💙' },
+  { title: 'Harry Potter', poster: '⚡🧙' },
+  { title: 'El Padrino', poster: '🎭🔫' },
+  { title: 'Frozen', poster: '❄️👸' },
+  { title: 'Buscando a Nemo', poster: '🐠🌊' }
 ];
 
 // Generador de objetivos
@@ -158,12 +162,15 @@ const DigaloConMimica = () => {
   const [teams, setTeams] = useState([]);
   const [currentTeam, setCurrentTeam] = useState(0);
   const [starterMovie, setStarterMovie] = useState(null);
+  const [isCardFlipped, setIsCardFlipped] = useState(false);
   const [currentCategory, setCurrentCategory] = useState(null);
   const [currentItem, setCurrentItem] = useState(null);
   const [timer, setTimer] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [lastTwoCategories, setLastTwoCategories] = useState([]);
+  const [teamLastCategories, setTeamLastCategories] = useState({});
   const [showObjectives, setShowObjectives] = useState(false);
+  const [currentObjectiveIndex, setCurrentObjectiveIndex] = useState(0);
+  const [isObjectiveRevealed, setIsObjectiveRevealed] = useState(false);
   const [usedItems, setUsedItems] = useState({
     peliculasUnapalabra: [],
     directoresFamosos: [],
@@ -226,6 +233,13 @@ const DigaloConMimica = () => {
       team.objective = objectives[i];
     });
 
+    // Inicializar tracking de categorías por equipo
+    const teamCategoryTracking = {};
+    for (let i = 0; i < numTeams; i++) {
+      teamCategoryTracking[i] = [];
+    }
+    setTeamLastCategories(teamCategoryTracking);
+
     setTeams(teamArray);
     setGamePhase('movieStart');
   };
@@ -234,6 +248,27 @@ const DigaloConMimica = () => {
   const showStarterMovie = () => {
     const randomMovie = STARTER_MOVIES[Math.floor(Math.random() * STARTER_MOVIES.length)];
     setStarterMovie(randomMovie);
+    setIsCardFlipped(false);
+  };
+
+  // Voltear tarjeta
+  const flipCard = () => {
+    setIsCardFlipped(!isCardFlipped);
+  };
+
+  // Navegación de objetivos
+  const nextObjective = () => {
+    setIsObjectiveRevealed(false);
+    setCurrentObjectiveIndex((currentObjectiveIndex + 1) % teams.length);
+  };
+
+  const prevObjective = () => {
+    setIsObjectiveRevealed(false);
+    setCurrentObjectiveIndex((currentObjectiveIndex - 1 + teams.length) % teams.length);
+  };
+
+  const toggleObjectiveReveal = () => {
+    setIsObjectiveRevealed(!isObjectiveRevealed);
   };
 
   // Comenzar la partida
@@ -244,11 +279,12 @@ const DigaloConMimica = () => {
 
   // Seleccionar categoría
   const selectCategory = (categoryKey) => {
-    // Verificar que no se repita más de 2 veces
-    if (lastTwoCategories.length === 2 && 
-        lastTwoCategories[0] === categoryKey && 
-        lastTwoCategories[1] === categoryKey) {
-      alert('No puedes elegir la misma categoría tres veces seguidas');
+    // Verificar que el equipo actual no haya jugado esta categoría 3 veces seguidas
+    const currentTeamHistory = teamLastCategories[currentTeam] || [];
+    if (currentTeamHistory.length >= 2 && 
+        currentTeamHistory[0] === categoryKey && 
+        currentTeamHistory[1] === categoryKey) {
+      alert('Este equipo no puede elegir la misma categoría tres veces seguidas');
       return;
     }
 
@@ -269,8 +305,10 @@ const DigaloConMimica = () => {
     setTimer(timeLimit);
     setIsTimerRunning(true);
 
-    // Actualizar últimas dos categorías
-    setLastTwoCategories([categoryKey, lastTwoCategories[0]]);
+    // Actualizar historial de categorías del equipo actual
+    const updatedTeamCategories = { ...teamLastCategories };
+    updatedTeamCategories[currentTeam] = [categoryKey, ...(updatedTeamCategories[currentTeam] || [])].slice(0, 2);
+    setTeamLastCategories(updatedTeamCategories);
 
     // Marcar como usado
     setUsedItems({
@@ -293,14 +331,9 @@ const DigaloConMimica = () => {
     setIsTimerRunning(false);
     setCurrentItem(null);
     setCurrentCategory(null);
-  };
-
-  // Siguiente turno
-  const nextTurn = () => {
+    
+    // Avanzar al siguiente equipo
     setCurrentTeam((currentTeam + 1) % numTeams);
-    setCurrentItem(null);
-    setCurrentCategory(null);
-    setIsTimerRunning(false);
   };
 
   // Robar punto
@@ -316,6 +349,47 @@ const DigaloConMimica = () => {
     setIsTimerRunning(false);
     setCurrentItem(null);
     setCurrentCategory(null);
+    
+    // Avanzar al siguiente equipo
+    setCurrentTeam((currentTeam + 1) % numTeams);
+  };
+
+  // Falló - pasar al siguiente turno
+  const missedTurn = () => {
+    setIsTimerRunning(false);
+    setCurrentItem(null);
+    setCurrentCategory(null);
+    
+    // Avanzar al siguiente equipo
+    setCurrentTeam((currentTeam + 1) % numTeams);
+  };
+
+  // Reiniciar partida
+  const restartGame = () => {
+    if (confirm('¿Estás seguro de que quieres reiniciar la partida?')) {
+      setGamePhase('setup');
+      setNumTeams(2);
+      setTimeLimit(60);
+      setTeams([]);
+      setCurrentTeam(0);
+      setStarterMovie(null);
+      setIsCardFlipped(false);
+      setCurrentCategory(null);
+      setCurrentItem(null);
+      setTimer(0);
+      setIsTimerRunning(false);
+      setTeamLastCategories({});
+      setShowObjectives(false);
+      setCurrentObjectiveIndex(0);
+      setUsedItems({
+        peliculasUnapalabra: [],
+        directoresFamosos: [],
+        series: [],
+        peliculasClasicas: [],
+        dibujosAnimados: [],
+        libros: []
+      });
+    }
   };
 
   // Render
@@ -380,8 +454,17 @@ const DigaloConMimica = () => {
             </button>
           ) : (
             <div className="starter-movie">
-              <div className="movie-poster-big">{starterMovie.poster}</div>
-              <p className="movie-hint">{starterMovie.hint}</p>
+              <div className={`flip-card ${isCardFlipped ? 'flipped' : ''}`} onClick={flipCard}>
+                <div className="flip-card-inner">
+                  <div className="flip-card-front">
+                    <div className="movie-poster-big">{starterMovie.poster}</div>
+                    <p className="flip-hint">Toca para revelar</p>
+                  </div>
+                  <div className="flip-card-back">
+                    <div className="movie-title-reveal">{starterMovie.title}</div>
+                  </div>
+                </div>
+              </div>
               <button className="begin-btn" onClick={beginPlaying}>
                 Comenzar Partida
               </button>
@@ -397,13 +480,37 @@ const DigaloConMimica = () => {
             </button>
             
             {showObjectives && (
-              <div className="objectives-list">
-                {teams.map(team => (
-                  <div key={team.id} className="objective-card">
-                    <h3>{team.name}</h3>
-                    <p>{team.objective}</p>
+              <div className="objectives-slider">
+                <div className="objective-card-single">
+                  <h3>{teams[currentObjectiveIndex]?.name}</h3>
+                  <div 
+                    className={`objective-reveal-container ${isObjectiveRevealed ? 'revealed' : ''}`}
+                    onClick={toggleObjectiveReveal}
+                  >
+                    <div className="objective-cover">
+                      <span className="reveal-icon">👁️</span>
+                      <p className="reveal-text">Desliza para revelar</p>
+                    </div>
+                    <div className="objective-content">
+                      <p>{teams[currentObjectiveIndex]?.objective}</p>
+                    </div>
                   </div>
-                ))}
+                </div>
+                <div className="slider-controls">
+                  <button 
+                    className="slider-btn"
+                    onClick={prevObjective}
+                  >
+                    ← Anterior
+                  </button>
+                  <span className="slider-indicator">{currentObjectiveIndex + 1} / {teams.length}</span>
+                  <button 
+                    className="slider-btn"
+                    onClick={nextObjective}
+                  >
+                    Siguiente →
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -422,6 +529,9 @@ const DigaloConMimica = () => {
                 ⏱️ {timer}s
               </div>
             )}
+            <button className="restart-btn" onClick={restartGame}>
+              🔄 Reiniciar
+            </button>
           </div>
 
           <div className="scoreboard">
@@ -482,8 +592,8 @@ const DigaloConMimica = () => {
                 <button className="correct-btn" onClick={markCorrect}>
                   ✓ Correcto
                 </button>
-                <button className="next-btn" onClick={nextTurn}>
-                  → Siguiente Turno
+                <button className="miss-btn" onClick={missedTurn}>
+                  ✗ Falló
                 </button>
               </div>
 
@@ -515,12 +625,36 @@ const DigaloConMimica = () => {
 
           {showObjectives && (
             <div className="objectives-overlay">
-              {teams.map(team => (
-                <div key={team.id} className="objective-display">
-                  <h4>{team.name}</h4>
-                  <p>{team.objective}</p>
+              <div className="objective-display">
+                <h4>{teams[currentObjectiveIndex]?.name}</h4>
+                <div 
+                  className={`objective-reveal-container ${isObjectiveRevealed ? 'revealed' : ''}`}
+                  onClick={toggleObjectiveReveal}
+                >
+                  <div className="objective-cover">
+                    <span className="reveal-icon">👁️</span>
+                    <p className="reveal-text">Toca para revelar</p>
+                  </div>
+                  <div className="objective-content">
+                    <p>{teams[currentObjectiveIndex]?.objective}</p>
+                  </div>
                 </div>
-              ))}
+              </div>
+              <div className="slider-controls-overlay">
+                <button 
+                  className="slider-btn-overlay"
+                  onClick={prevObjective}
+                >
+                  ←
+                </button>
+                <span className="slider-indicator">{currentObjectiveIndex + 1} / {teams.length}</span>
+                <button 
+                  className="slider-btn-overlay"
+                  onClick={nextObjective}
+                >
+                  →
+                </button>
+              </div>
             </div>
           )}
         </div>

@@ -253,9 +253,55 @@ body {
   }
 }
 
+/* FLIP CARD */
+.flip-card {
+  width: 300px;
+  height: 350px;
+  margin: 0 auto 30px;
+  perspective: 1000px;
+  cursor: pointer;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.flip-card.flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.flip-card-front {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.flip-card-back {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  transform: rotateY(180deg);
+}
+
 .movie-poster-big {
-  font-size: 10rem;
-  margin-bottom: 30px;
+  font-size: 8rem;
+  margin-bottom: 20px;
   animation: bounce 1s ease-in-out;
 }
 
@@ -268,11 +314,19 @@ body {
   }
 }
 
-.movie-hint {
-  font-size: 1.5rem;
-  color: var(--text-dark);
-  margin-bottom: 40px;
+.flip-hint {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  margin-top: 20px;
   font-style: italic;
+}
+
+.movie-title-reveal {
+  font-size: 2.5rem;
+  font-weight: 700;
+  padding: 40px;
+  text-align: center;
+  line-height: 1.3;
 }
 
 .begin-btn {
@@ -318,6 +372,133 @@ body {
   color: var(--text-dark);
 }
 
+.objectives-slider {
+  margin-top: 30px;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.objective-card-single {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.4s ease-out;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.objective-card-single h3 {
+  font-size: 1.8rem;
+  color: var(--primary-purple);
+  margin-bottom: 20px;
+}
+
+/* OBJECTIVE REVEAL/HIDE */
+.objective-reveal-container {
+  position: relative;
+  min-height: 120px;
+  border-radius: 15px;
+  overflow: hidden;
+  cursor: pointer;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.objective-cover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.4s ease;
+  z-index: 2;
+}
+
+.objective-reveal-container.revealed .objective-cover {
+  transform: translateX(-100%);
+}
+
+.reveal-icon {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+.reveal-text {
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.objective-content {
+  padding: 30px;
+  background: white;
+  border-radius: 15px;
+  position: relative;
+  z-index: 1;
+}
+
+.objective-content p {
+  font-size: 1.1rem;
+  color: var(--text-dark);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.slider-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 25px;
+}
+
+.slider-btn {
+  padding: 12px 25px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+  border: 2px solid white;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Fredoka', sans-serif;
+  backdrop-filter: blur(10px);
+}
+
+.slider-btn:hover {
+  background: white;
+  color: var(--text-dark);
+  transform: scale(1.05);
+}
+
+.slider-indicator {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: white;
+  min-width: 80px;
+  text-align: center;
+}
+
 .objectives-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -334,17 +515,6 @@ body {
   padding: 25px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   animation: slideUp 0.4s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .objective-card h3 {
@@ -389,6 +559,25 @@ body {
   color: var(--primary-red);
   font-weight: 700;
   font-size: 1.8rem;
+}
+
+.restart-btn {
+  padding: 12px 25px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #95E1D3, #4ECDC4);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Fredoka', sans-serif;
+  box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+}
+
+.restart-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(78, 205, 196, 0.5);
 }
 
 .timer {
@@ -577,7 +766,7 @@ body {
   flex-wrap: wrap;
 }
 
-.correct-btn, .next-btn {
+.correct-btn, .miss-btn {
   padding: 20px 50px;
   font-size: 1.3rem;
   font-weight: 700;
@@ -599,14 +788,14 @@ body {
   box-shadow: 0 10px 30px rgba(78, 205, 196, 0.4);
 }
 
-.next-btn {
-  background: linear-gradient(135deg, #FFE66D, #FFC93C);
-  color: var(--text-dark);
+.miss-btn {
+  background: linear-gradient(135deg, #F38181, #FF6B6B);
+  color: white;
 }
 
-.next-btn:hover {
+.miss-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(255, 230, 109, 0.4);
+  box-shadow: 0 10px 30px rgba(243, 129, 129, 0.4);
 }
 
 .steal-section {
@@ -679,8 +868,6 @@ body {
   padding: 30px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   max-width: 400px;
-  max-height: 500px;
-  overflow-y: auto;
   z-index: 999;
   animation: slideInRight 0.3s ease-out;
 }
@@ -697,27 +884,59 @@ body {
 }
 
 .objective-display {
-  margin-bottom: 25px;
+  margin-bottom: 20px;
   padding-bottom: 20px;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
-}
-
-.objective-display:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-  margin-bottom: 0;
 }
 
 .objective-display h4 {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   color: var(--primary-purple);
-  margin-bottom: 10px;
+  margin-bottom: 15px;
 }
 
-.objective-display p {
-  font-size: 1rem;
+.objective-display .objective-reveal-container {
+  min-height: 100px;
+}
+
+.objective-display .objective-content {
+  padding: 20px;
+}
+
+.objective-display .objective-content p {
+  font-size: 1.05rem;
   color: var(--text-dark);
   line-height: 1.6;
+}
+
+.slider-controls-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  border-top: 2px solid rgba(0, 0, 0, 0.1);
+  padding-top: 20px;
+}
+
+.slider-btn-overlay {
+  width: 45px;
+  height: 45px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  background: var(--primary-purple);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Fredoka', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slider-btn-overlay:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(170, 150, 218, 0.4);
 }
 
 /* RESPONSIVE */
@@ -741,8 +960,29 @@ body {
     padding: 18px 30px;
   }
 
+  .flip-card {
+    width: 250px;
+    height: 300px;
+  }
+
   .movie-poster-big {
     font-size: 6rem;
+  }
+
+  .movie-title-reveal {
+    font-size: 1.8rem;
+    padding: 30px;
+  }
+
+  .game-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .restart-btn {
+    width: 100%;
+    text-align: center;
   }
 
   .scoreboard {
@@ -761,6 +1001,15 @@ body {
     font-size: 1.8rem;
   }
 
+  .action-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .correct-btn, .miss-btn {
+    width: 100%;
+  }
+
   .objectives-overlay {
     position: fixed;
     bottom: 0;
@@ -768,7 +1017,6 @@ body {
     left: 0;
     max-width: 100%;
     border-radius: 20px 20px 0 0;
-    max-height: 70vh;
   }
 
   .objectives-toggle {
@@ -776,6 +1024,23 @@ body {
     right: 20px;
     font-size: 1rem;
     padding: 12px 20px;
+  }
+
+  .objective-card-single {
+    padding: 30px 20px;
+    min-height: 180px;
+  }
+
+  .objective-card-single h3 {
+    font-size: 1.5rem;
+  }
+
+  .reveal-icon {
+    font-size: 2.5rem;
+  }
+
+  .reveal-text {
+    font-size: 1rem;
   }
 }
 
