@@ -742,6 +742,12 @@ body {
   margin-bottom: 15px;
 }
 
+.team-card.drop-target-highlight {
+  border: 3px dashed var(--primary-yellow);
+  background: rgba(255, 230, 109, 0.1);
+  transform: scale(1.02);
+}
+
 .stars-display {
   display: flex;
   flex-wrap: wrap;
@@ -870,6 +876,7 @@ body {
   width: 400px;
   height: 400px;
   margin: 0 auto 40px;
+  filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.25));
 }
 
 .wheel-pointer {
@@ -888,8 +895,21 @@ body {
   height: 100%;
   border-radius: 50%;
   position: relative;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  border: 8px solid white;
+  overflow: hidden;
   transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+}
+
+.wheel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
 }
 
 .wheel.spinning {
@@ -907,18 +927,21 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  border-right: 2px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .wheel-segment-content {
   position: absolute;
-  top: 30%;
-  left: 30%;
+  top: 25%;
+  left: 35%;
   transform: rotate(30deg);
 }
 
 .wheel-emoji {
-  font-size: 2.5rem;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  font-size: 3rem;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
+  text-shadow: 0 2px 4px rgba(255, 255, 255, 0.3);
 }
 
 .wheel-center {
@@ -926,16 +949,65 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 80px;
-  height: 80px;
-  background: white;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #ffffff, #f0f0f0);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.5rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  font-size: 3rem;
+  box-shadow: 
+    0 0 0 8px white,
+    0 8px 20px rgba(0, 0, 0, 0.3),
+    inset 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 5;
+}
+
+.wheel-pointer {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 4rem;
+  color: #FF6B6B;
+  z-index: 10;
+  filter: drop-shadow(0 4px 12px rgba(255, 107, 107, 0.6));
+  animation: pointerBounce 1s ease-in-out infinite;
+}
+
+@keyframes pointerBounce {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-8px);
+  }
+}
+@media (max-width: 768px) {
+  .wheel-wrapper {
+    width: 300px;
+    height: 300px;
+  }
+
+  .wheel-emoji {
+    font-size: 2.2rem;
+  }
+
+  .wheel-center {
+    width: 75px;
+    height: 75px;
+    font-size: 2.2rem;
+  }
+
+  .wheel-pointer {
+    font-size: 3rem;
+    top: -35px;
+  }
+
+  .wheel {
+    border: 6px solid white;
+  }
 }
 
 .spin-btn {

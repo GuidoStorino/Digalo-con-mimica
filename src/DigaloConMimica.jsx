@@ -556,6 +556,7 @@ const DigaloConMimica = () => {
   };
 
   // Girar ruleta
+// Girar ruleta
   const spinWheel = () => {
     if (isWheelSpinning) return;
     
@@ -564,21 +565,36 @@ const DigaloConMimica = () => {
     
     // Categorías disponibles
     const categories = Object.keys(categoryConfig);
+    const totalCategories = categories.length;
+    const degreesPerCategory = 360 / totalCategories;
     
-    // Calcular rotación: múltiples vueltas + posición final aleatoria
-    const spins = 5 + Math.random() * 3; // 5-8 vueltas
-    const categoryIndex = Math.floor(Math.random() * categories.length);
-    const degreesPerCategory = 360 / categories.length;
-    const finalRotation = (spins * 360) + (categoryIndex * degreesPerCategory) + (degreesPerCategory / 2);
+    // Elegir categoría aleatoria
+    const categoryIndex = Math.floor(Math.random() * totalCategories);
+    const selectedCategory = categories[categoryIndex];
+    
+    // Calcular rotación exacta
+    // La ruleta debe detenerse de manera que la categoría elegida quede arriba (bajo el pointer)
+    // El pointer apunta a las 12 en punto (0 grados desde la perspectiva del usuario)
+    
+    // Cada segmento empieza en: index * degreesPerCategory
+    // Queremos que el CENTRO del segmento quede arriba
+    const segmentStartDegree = categoryIndex * degreesPerCategory;
+    const segmentCenterDegree = segmentStartDegree + (degreesPerCategory / 2);
+    
+    // Vueltas completas (5-8 vueltas para efecto dramático)
+    const fullSpins = 5 + Math.floor(Math.random() * 3);
+    
+    // Rotación final: vueltas completas + ajuste para que la categoría quede arriba
+    // Restamos segmentCenterDegree porque queremos que ESE punto llegue a 0° (arriba)
+    const finalRotation = (fullSpins * 360) + (360 - segmentCenterDegree);
     
     setWheelRotation(finalRotation);
     
     // Después de la animación, mostrar resultado
     setTimeout(() => {
-      const selectedCategory = categories[categoryIndex];
       setSelectedWheelCategory(selectedCategory);
       setIsWheelSpinning(false);
-    }, 4000); // 4 segundos de animación
+    }, 4000);
   };
 
   // Usar categoría de la ruleta
@@ -622,6 +638,60 @@ const DigaloConMimica = () => {
 
   const handleStarDrop = (e, targetTeamId) => {
     e.preventDefault();
+
+    // Touch events para móviles
+  const handleTouchStart = (e, teamId, categoryKey) => {
+    setDraggedStar({ teamId, categoryKey });
+    e.target.style.opacity = '0.5';
+  };
+
+  const handleTouchMove = (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    
+    // Resaltar área de drop
+    document.querySelectorAll('.team-card').forEach(card => {
+      card.classList.remove('drop-target-highlight');
+    });
+    
+    const teamCard = element?.closest('.team-card');
+    if (teamCard) {
+      teamCard.classList.add('drop-target-highlight');
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    e.target.style.opacity = '1';
+    
+    if (!draggedStar) return;
+    
+    const touch = e.changedTouches[0];
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    const teamCard = element?.closest('.team-card');
+    
+    // Limpiar highlight
+    document.querySelectorAll('.team-card').forEach(card => {
+      card.classList.remove('drop-target-highlight');
+    });
+    
+    if (teamCard) {
+      const targetTeamId = parseInt(teamCard.dataset.teamid);
+      
+      if (draggedStar.teamId !== targetTeamId) {
+        if (confirm(`¿${teams[draggedStar.teamId].name} quiere robar la estrella de ${categoryConfig[draggedStar.categoryKey].name} a ${teams[targetTeamId].name}?`)) {
+          const updatedTeams = [...teams];
+          updatedTeams[draggedStar.teamId].stars[draggedStar.categoryKey] = false;
+          updatedTeams[draggedStar.teamId].points[draggedStar.categoryKey] = 0;
+          updatedTeams[targetTeamId].stars[draggedStar.categoryKey] = true;
+          updatedTeams[targetTeamId].points[draggedStar.categoryKey] = 3;
+          setTeams(updatedTeams);
+        }
+      }
+    }
+    
+    setDraggedStar(null);
+  };
     
     if (!draggedStar || draggedStar.teamId === targetTeamId) {
       setDraggedStar(null);
@@ -766,6 +836,47 @@ const DigaloConMimica = () => {
       });
     }
   };
+
+  // Guardar estado en localStorage
+  useEffect(() => {
+    if (gamePhase !== 'setup') {
+      const gameState = {
+        gamePhase,
+        numTeams,
+        timeLimit,
+        teams,
+        currentTeam,
+        teamLastCategories,
+        usedItems,
+        timer,
+        isTimerRunning
+      };
+      localStorage.setItem('digaloConMimicaState', JSON.stringify(gameState));
+    }
+  }, [gamePhase, teams, currentTeam, teamLastCategories, usedItems, timer]);
+
+  // Cargar estado al montar
+  useEffect(() => {
+    const savedState = localStorage.getItem('digaloConMimicaState');
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        if (window.confirm('¿Deseas continuar la partida anterior?')) {
+          setGamePhase(parsed.gamePhase);
+          setNumTeams(parsed.numTeams);
+          setTimeLimit(parsed.timeLimit);
+          setTeams(parsed.teams);
+          setCurrentTeam(parsed.currentTeam);
+          setTeamLastCategories(parsed.teamLastCategories);
+          setUsedItems(parsed.usedItems);
+          setTimer(parsed.timer);
+          setIsTimerRunning(false); // No reiniciar timer automáticamente
+        }
+      } catch (e) {
+        console.error('Error al cargar el estado guardado');
+      }
+    }
+  }, []);
 
   // Render
   return (
@@ -975,44 +1086,47 @@ const DigaloConMimica = () => {
               🔄 Reiniciar
             </button>
           </div>
-
-          <div className="scoreboard">
-            {teams.map(team => (
-              <div 
-                key={team.id} 
-                className={`team-card ${team.id === currentTeam ? 'active-team' : ''}`}
-                onDragOver={handleStarDragOver}
-                onDrop={(e) => handleStarDrop(e, team.id)}
-              >
-                <h3>{team.name}</h3>
-                <div className="stars-display">
-                  {Object.keys(categoryConfig).map(catKey => (
-                    team.stars[catKey] && (
-                      <span 
-                        key={catKey} 
-                        className="star-badge" 
-                        style={{ backgroundColor: categoryConfig[catKey].color }}
-                        draggable="true"
-                        onDragStart={(e) => handleStarDragStart(e, team.id, catKey)}
-                      >
-                        ⭐ {categoryConfig[catKey].emoji}
-                      </span>
-                    )
-                  ))}
-                </div>
-                <div className="points-summary">
-                  {Object.keys(team.points).map(catKey => (
-                    team.points[catKey] > 0 && (
-                      <div key={catKey} className="point-item">
-                        <span>{categoryConfig[catKey].emoji}</span>
-                        <span>{team.points[catKey]}</span>
-                      </div>
-                    )
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+<div className="scoreboard">
+  {teams.map(team => (
+    <div 
+      key={team.id} 
+      className={`team-card ${team.id === currentTeam ? 'active-team' : ''}`}
+      data-teamid={team.id}
+      onDragOver={handleStarDragOver}
+      onDrop={(e) => handleStarDrop(e, team.id)}
+    >
+      <h3>{team.name}</h3>
+      <div className="stars-display">
+        {Object.keys(categoryConfig).map(catKey => (
+          team.stars[catKey] && (
+            <span 
+              key={catKey} 
+              className="star-badge" 
+              style={{ backgroundColor: categoryConfig[catKey].color }}
+              draggable="true"
+              onDragStart={(e) => handleStarDragStart(e, team.id, catKey)}
+              onTouchStart={(e) => handleTouchStart(e, team.id, catKey)}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              ⭐ {categoryConfig[catKey].emoji}
+            </span>
+          )
+        ))}
+      </div>
+      <div className="points-summary">
+        {Object.keys(team.points).map(catKey => (
+          team.points[catKey] > 0 && (
+            <div key={catKey} className="point-item">
+              <span>{categoryConfig[catKey].emoji}</span>
+              <span>{team.points[catKey]}</span>
+            </div>
+          )
+        ))}
+      </div>
+    </div>
+  ))}
+</div>
 
           {!currentItem ? (
             <div className="category-selection">
