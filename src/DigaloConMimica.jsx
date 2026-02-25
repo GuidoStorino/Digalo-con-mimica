@@ -455,6 +455,7 @@ const DigaloConMimica = () => {
   const [useWheel, setUseWheel] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
   const [draggedStar, setDraggedStar] = useState(null);
+  const [stealConfirmation, setStealConfirmation] = useState(null);
   const [usedItems, setUsedItems] = useState({
     peliculasUnapalabra: [],
     directoresFamosos: [],
@@ -631,7 +632,7 @@ const DigaloConMimica = () => {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleStarDrop = (e, targetTeamId) => {
+const handleStarDrop = (e, targetTeamId) => {
     e.preventDefault();
     
     if (!draggedStar || draggedStar.teamId === targetTeamId) {
@@ -639,20 +640,12 @@ const DigaloConMimica = () => {
       return;
     }
 
-    // Confirmar robo de estrella
-    if (confirm(`¿${teams[draggedStar.teamId].name} quiere robar la estrella de ${categoryConfig[draggedStar.categoryKey].name} a ${teams[targetTeamId].name}?`)) {
-      const updatedTeams = [...teams];
-      
-      // Quitar estrella y puntos del equipo original
-      updatedTeams[draggedStar.teamId].stars[draggedStar.categoryKey] = false;
-      updatedTeams[draggedStar.teamId].points[draggedStar.categoryKey] = 0;
-      
-      // Dar estrella y puntos al equipo objetivo
-      updatedTeams[targetTeamId].stars[draggedStar.categoryKey] = true;
-      updatedTeams[targetTeamId].points[draggedStar.categoryKey] = 3;
-      
-      setTeams(updatedTeams);
-    }
+    // Mostrar modal de confirmación
+    setStealConfirmation({
+      fromTeam: draggedStar.teamId,
+      toTeam: targetTeamId,
+      category: draggedStar.categoryKey
+    });
     
     setDraggedStar(null);
   };
@@ -662,6 +655,8 @@ const DigaloConMimica = () => {
     e.stopPropagation();
     setDraggedStar({ teamId, categoryKey });
     e.target.style.opacity = '0.5';
+    e.target.style.transform = 'scale(1.3)';
+    e.target.style.zIndex = '1000';
   };
 
   const handleTouchMove = (e) => {
@@ -669,6 +664,21 @@ const DigaloConMimica = () => {
     
     e.preventDefault();
     const touch = e.touches[0];
+    
+    // Crear elemento visual que sigue el dedo
+    let ghost = document.getElementById('drag-ghost');
+    if (!ghost) {
+      ghost = document.createElement('div');
+      ghost.id = 'drag-ghost';
+      ghost.className = 'drag-ghost';
+      ghost.innerHTML = `⭐ ${categoryConfig[draggedStar.categoryKey].emoji}`;
+      ghost.style.backgroundColor = categoryConfig[draggedStar.categoryKey].color;
+      document.body.appendChild(ghost);
+    }
+    
+    ghost.style.left = touch.clientX + 'px';
+    ghost.style.top = touch.clientY + 'px';
+    
     const element = document.elementFromPoint(touch.clientX, touch.clientY);
     
     // Resaltar área de drop
@@ -684,6 +694,14 @@ const DigaloConMimica = () => {
 
   const handleTouchEnd = (e) => {
     e.target.style.opacity = '1';
+    e.target.style.transform = 'scale(1)';
+    e.target.style.zIndex = 'auto';
+    
+    // Remover elemento visual
+    const ghost = document.getElementById('drag-ghost');
+    if (ghost) {
+      ghost.remove();
+    }
     
     if (!draggedStar) return;
     
@@ -700,18 +718,35 @@ const DigaloConMimica = () => {
       const targetTeamId = parseInt(teamCard.dataset.teamid);
       
       if (draggedStar.teamId !== targetTeamId) {
-        if (confirm(`¿${teams[draggedStar.teamId].name} quiere robar la estrella de ${categoryConfig[draggedStar.categoryKey].name} a ${teams[targetTeamId].name}?`)) {
-          const updatedTeams = [...teams];
-          updatedTeams[draggedStar.teamId].stars[draggedStar.categoryKey] = false;
-          updatedTeams[draggedStar.teamId].points[draggedStar.categoryKey] = 0;
-          updatedTeams[targetTeamId].stars[draggedStar.categoryKey] = true;
-          updatedTeams[targetTeamId].points[draggedStar.categoryKey] = 3;
-          setTeams(updatedTeams);
-        }
+        // Mostrar modal de confirmación
+        setStealConfirmation({
+          fromTeam: draggedStar.teamId,
+          toTeam: targetTeamId,
+          category: draggedStar.categoryKey
+        });
       }
     }
     
     setDraggedStar(null);
+  };
+
+  // Confirmar robo de estrella
+  const confirmSteal = () => {
+    if (!stealConfirmation) return;
+    
+    const updatedTeams = [...teams];
+    updatedTeams[stealConfirmation.fromTeam].stars[stealConfirmation.category] = false;
+    updatedTeams[stealConfirmation.fromTeam].points[stealConfirmation.category] = 0;
+    updatedTeams[stealConfirmation.toTeam].stars[stealConfirmation.category] = true;
+    updatedTeams[stealConfirmation.toTeam].points[stealConfirmation.category] = 3;
+    
+    setTeams(updatedTeams);
+    setStealConfirmation(null);
+  };
+
+  // Cancelar robo de estrella
+  const cancelSteal = () => {
+    setStealConfirmation(null);
   };
 
   // Comenzar la partida
@@ -877,7 +912,7 @@ const restartGame = () => {
     }
   }, []);
 
-  // Render
+    // Render
   return (
     <div className="game-container">
       {/* SETUP */}
@@ -902,7 +937,10 @@ const restartGame = () => {
                     {num}
                   </button>
                 ))}
+                
               </div>
+
+              
             </div>
 
             <div className="setup-option">
@@ -984,6 +1022,8 @@ const restartGame = () => {
                   <p>Si el equipo no logra robar, el equipo rival conservará la estrella y un punto de una categoría a elección</p>
                 </div>
 
+                
+
                 <div className="instructions-section">
                   <h3>🏆 Victoria</h3>
                   <p>El juego termina cuando un equipo cumple su objetivo secreto. </p>
@@ -991,7 +1031,10 @@ const restartGame = () => {
               </div>
             </div>
           )}
-        </div>
+
+          
+
+          </div>
       )}
 
       {/* MOVIE START */}
@@ -1301,8 +1344,43 @@ const restartGame = () => {
           )}
         </div>
       )}
+{/* Modal de confirmación de robo */}
+      {stealConfirmation && (
+        <div className="steal-modal-overlay" onClick={cancelSteal}>
+          <div className="steal-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="steal-modal-icon">👑</div>
+            <h2>¿Robar Estrella?</h2>
+            <div className="steal-modal-content">
+              <div className="steal-from">
+                <span className="team-label">{teams[stealConfirmation.fromTeam].name}</span>
+                <div 
+                  className="star-preview"
+                  style={{ backgroundColor: categoryConfig[stealConfirmation.category].color }}
+                >
+                  ⭐ {categoryConfig[stealConfirmation.category].emoji}
+                </div>
+              </div>
+              <div className="steal-arrow">→</div>
+              <div className="steal-to">
+                <span className="team-label">{teams[stealConfirmation.toTeam].name}</span>
+                <div className="steal-placeholder">?</div>
+              </div>
+            </div>
+            <p className="steal-category-name">{categoryConfig[stealConfirmation.category].name}</p>
+            <div className="steal-modal-actions">
+              <button className="steal-confirm-btn" onClick={confirmSteal}>
+                ✓ Confirmar Robo
+              </button>
+              <button className="steal-cancel-btn" onClick={cancelSteal}>
+                ✕ Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+      
 
 export default DigaloConMimica;

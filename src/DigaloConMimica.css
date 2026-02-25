@@ -1556,3 +1556,233 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(170, 150, 218, 0.8);
 }
+
+/* DRAG GHOST - Elemento visual que sigue el dedo */
+.drag-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 10000;
+  padding: 10px 20px;
+  border-radius: 20px;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  transform: translate(-50%, -50%) scale(1.2);
+  animation: ghostPulse 0.5s ease-in-out infinite;
+}
+
+@keyframes ghostPulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.3);
+  }
+}
+
+/* STEAL MODAL */
+.steal-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  padding: 20px;
+  animation: fadeIn 0.3s ease-out;
+  backdrop-filter: blur(5px);
+}
+
+.steal-modal {
+  background: white;
+  border-radius: 30px;
+  padding: 40px;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  animation: modalSlideIn 0.4s ease-out;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.steal-modal-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  animation: bounce 1s ease-in-out infinite;
+}
+
+.steal-modal h2 {
+  font-size: 2rem;
+  color: var(--primary-purple);
+  margin-bottom: 30px;
+  font-weight: 700;
+}
+
+.steal-modal-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  margin-bottom: 25px;
+  gap: 20px;
+}
+
+.steal-from, .steal-to {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+}
+
+.team-label {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.star-preview {
+  padding: 15px 25px;
+  border-radius: 20px;
+  color: white;
+  font-size: 2rem;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  animation: starShake 0.5s ease-in-out infinite;
+}
+
+@keyframes starShake {
+  0%, 100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+.steal-placeholder {
+  width: 80px;
+  height: 60px;
+  border: 3px dashed rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.steal-arrow {
+  font-size: 3rem;
+  color: var(--primary-red);
+  font-weight: 700;
+  animation: arrowBounce 1s ease-in-out infinite;
+}
+
+@keyframes arrowBounce {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(10px);
+  }
+}
+
+.steal-category-name {
+  font-size: 1.3rem;
+  color: var(--text-dark);
+  margin-bottom: 30px;
+  font-weight: 600;
+}
+
+.steal-modal-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.steal-confirm-btn, .steal-cancel-btn {
+  padding: 18px 40px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Fredoka', sans-serif;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.steal-confirm-btn {
+  background: linear-gradient(135deg, #4ECDC4, #44A08D);
+  color: white;
+  flex: 1;
+  min-width: 180px;
+}
+
+.steal-confirm-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(78, 205, 196, 0.5);
+}
+
+.steal-cancel-btn {
+  background: linear-gradient(135deg, #F38181, #FF6B6B);
+  color: white;
+  flex: 1;
+  min-width: 180px;
+}
+
+.steal-cancel-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(243, 129, 129, 0.5);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .steal-modal {
+    padding: 30px 20px;
+  }
+
+  .steal-modal h2 {
+    font-size: 1.6rem;
+  }
+
+  .steal-modal-content {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .steal-arrow {
+    transform: rotate(90deg);
+    font-size: 2.5rem;
+  }
+
+  .steal-modal-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .steal-confirm-btn, .steal-cancel-btn {
+    width: 100%;
+  }
+
+  .drag-ghost {
+    font-size: 1.2rem;
+    padding: 8px 16px;
+  }
+}
