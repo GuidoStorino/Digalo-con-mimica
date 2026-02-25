@@ -557,6 +557,7 @@ const DigaloConMimica = () => {
 
   // Girar ruleta
 // Girar ruleta
+// Girar ruleta
   const spinWheel = () => {
     if (isWheelSpinning) return;
     
@@ -573,19 +574,13 @@ const DigaloConMimica = () => {
     const selectedCategory = categories[categoryIndex];
     
     // Calcular rotación exacta
-    // La ruleta debe detenerse de manera que la categoría elegida quede arriba (bajo el pointer)
-    // El pointer apunta a las 12 en punto (0 grados desde la perspectiva del usuario)
-    
-    // Cada segmento empieza en: index * degreesPerCategory
-    // Queremos que el CENTRO del segmento quede arriba
     const segmentStartDegree = categoryIndex * degreesPerCategory;
     const segmentCenterDegree = segmentStartDegree + (degreesPerCategory / 2);
     
     // Vueltas completas (5-8 vueltas para efecto dramático)
     const fullSpins = 5 + Math.floor(Math.random() * 3);
     
-    // Rotación final: vueltas completas + ajuste para que la categoría quede arriba
-    // Restamos segmentCenterDegree porque queremos que ESE punto llegue a 0° (arriba)
+    // Rotación final
     const finalRotation = (fullSpins * 360) + (360 - segmentCenterDegree);
     
     setWheelRotation(finalRotation);
@@ -638,14 +633,40 @@ const DigaloConMimica = () => {
 
   const handleStarDrop = (e, targetTeamId) => {
     e.preventDefault();
+    
+    if (!draggedStar || draggedStar.teamId === targetTeamId) {
+      setDraggedStar(null);
+      return;
+    }
 
-    // Touch events para móviles
+    // Confirmar robo de estrella
+    if (confirm(`¿${teams[draggedStar.teamId].name} quiere robar la estrella de ${categoryConfig[draggedStar.categoryKey].name} a ${teams[targetTeamId].name}?`)) {
+      const updatedTeams = [...teams];
+      
+      // Quitar estrella y puntos del equipo original
+      updatedTeams[draggedStar.teamId].stars[draggedStar.categoryKey] = false;
+      updatedTeams[draggedStar.teamId].points[draggedStar.categoryKey] = 0;
+      
+      // Dar estrella y puntos al equipo objetivo
+      updatedTeams[targetTeamId].stars[draggedStar.categoryKey] = true;
+      updatedTeams[targetTeamId].points[draggedStar.categoryKey] = 3;
+      
+      setTeams(updatedTeams);
+    }
+    
+    setDraggedStar(null);
+  };
+
+  // Touch events para móviles
   const handleTouchStart = (e, teamId, categoryKey) => {
+    e.stopPropagation();
     setDraggedStar({ teamId, categoryKey });
     e.target.style.opacity = '0.5';
   };
 
   const handleTouchMove = (e) => {
+    if (!draggedStar) return;
+    
     e.preventDefault();
     const touch = e.touches[0];
     const element = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -688,29 +709,6 @@ const DigaloConMimica = () => {
           setTeams(updatedTeams);
         }
       }
-    }
-    
-    setDraggedStar(null);
-  };
-    
-    if (!draggedStar || draggedStar.teamId === targetTeamId) {
-      setDraggedStar(null);
-      return;
-    }
-
-    // Confirmar robo de estrella
-    if (confirm(`¿${teams[draggedStar.teamId].name} quiere robar la estrella de ${categoryConfig[draggedStar.categoryKey].name} a ${teams[targetTeamId].name}?`)) {
-      const updatedTeams = [...teams];
-      
-      // Quitar estrella y puntos del equipo original
-      updatedTeams[draggedStar.teamId].stars[draggedStar.categoryKey] = false;
-      updatedTeams[draggedStar.teamId].points[draggedStar.categoryKey] = 0;
-      
-      // Dar estrella y puntos al equipo objetivo
-      updatedTeams[targetTeamId].stars[draggedStar.categoryKey] = true;
-      updatedTeams[targetTeamId].points[draggedStar.categoryKey] = 3;
-      
-      setTeams(updatedTeams);
     }
     
     setDraggedStar(null);
@@ -810,8 +808,9 @@ const DigaloConMimica = () => {
   };
 
   // Reiniciar partida
-  const restartGame = () => {
+const restartGame = () => {
     if (confirm('¿Estás seguro de que quieres reiniciar la partida?')) {
+      localStorage.removeItem('digaloConMimicaState'); // Agregar esta línea
       setGamePhase('setup');
       setNumTeams(2);
       setTimeLimit(60);

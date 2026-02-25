@@ -769,6 +769,7 @@ body {
   cursor: grab;
   transition: all 0.3s ease;
   user-select: none;
+  touch-action: none; /* Agregar esta línea */
 }
 
 .star-badge:hover {
